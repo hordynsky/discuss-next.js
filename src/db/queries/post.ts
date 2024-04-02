@@ -2,7 +2,7 @@ import type { Post } from "@prisma/client";
 
 import { db } from "@/db";
 
-export type PostWithData = Post & {
+export type PostDisplayItem = Post & {
   topic: {
     slug: string;
   };
@@ -12,13 +12,28 @@ export type PostWithData = Post & {
   user: { name: string | null };
 };
 
-export function fetchPostsByTopicSlug(slug: string): Promise<PostWithData[]> {
+// export type PostWithData = Awaited<
+//   ReturnType<typeof fetchPostsByTopicSlug>
+// >[];
+
+export function fetchPostsByTopicSlug(slug: string): Promise<PostDisplayItem[]> {
   return db.post.findMany({
     where: {
       topic: {
         slug,
       },
     },
+    include: {
+      topic: { select: { slug: true } },
+      user: { select: { name: true } },
+      _count: { select: { comments: true }}
+    },
+  });
+}
+
+export function fetchTopPosts(): Promise<PostDisplayItem[]> {
+  return db.post.findMany({
+    take: 4,
     include: {
       topic: { select: { slug: true } },
       user: { select: { name: true } },
